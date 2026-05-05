@@ -8,5 +8,7 @@ public interface IWalletRepository
 
     Task<int> UpdateBalanceAsync(Guid userId, decimal delta, CancellationToken cancellationToken = default);
 
+    Task<int> TryDecreaseBalanceAsync(Guid userId, decimal amount, CancellationToken cancellationToken = default);
+
     Task AddAsync(Wallet wallet, CancellationToken cancellationToken = default);
 }

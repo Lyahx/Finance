@@ -22,6 +22,13 @@ public sealed class WalletRepository : IWalletRepository
                 setters => setters.SetProperty(w => w.Balance, w => w.Balance + delta),
                 cancellationToken);
 
+    public Task<int> TryDecreaseBalanceAsync(Guid userId, decimal amount, CancellationToken cancellationToken = default)
+        => _db.Wallets
+            .Where(w => w.UserId == userId && w.Balance >= amount)
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(w => w.Balance, w => w.Balance - amount),
+                cancellationToken);
+
     public async Task AddAsync(Wallet wallet, CancellationToken cancellationToken = default)
     {
         await _db.Wallets.AddAsync(wallet, cancellationToken);
