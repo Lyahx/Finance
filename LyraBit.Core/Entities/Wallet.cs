@@ -12,6 +12,5 @@ public class Wallet
 
     public DateTime CreatedAt { get; set; }
 
-    // Navigation
     public User User { get; set; } = null!;
 }

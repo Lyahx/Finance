@@ -14,7 +14,6 @@ public class User
 
     public DateTime CreatedAt { get; set; }
 
-    // Navigation
     public Wallet? Wallet { get; set; }
 
     public ICollection<Transaction> SentTransactions { get; set; } = new List<Transaction>();

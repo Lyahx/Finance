@@ -20,12 +20,10 @@ public class Transaction
 
     public int? RiskScore { get; set; }
 
-    // Python data servisi dolduracak
     public string? Category { get; set; }
 
     public DateTime CreatedAt { get; set; }
 
-    // Navigation
     public User Sender { get; set; } = null!;
 
     public User Receiver { get; set; } = null!;
