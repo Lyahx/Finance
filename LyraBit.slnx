@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="LyraBit.API/LyraBit.API.csproj" />
+  <Project Path="LyraBit.Core/LyraBit.Core.csproj" />
+  <Project Path="LyraBit.Data/LyraBit.Data.csproj" />
+  <Project Path="LyraBit.Services/LyraBit.Services.csproj" />
+</Solution>
