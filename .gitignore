@@ -1,0 +1,96 @@
+# =====================================================================
+# .gitignore — LyraBit (.NET 10 + Rider + Docker)
+# =====================================================================
+
+# Build output
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Ll]og/
+[Ll]ogs/
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]uild/
+[Pp]ublish/
+
+# .NET / MSBuild
+project.lock.json
+project.fragment.lock.json
+artifacts/
+*.binlog
+*.tlog
+*.cache
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+.vs/
+.vshistory/
+*.svclog
+*.scc
+
+# NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+
+# EF Core (only ignore generated tooling state, not migrations)
+# We intentionally DO NOT ignore Migrations/
+
+# Rider / JetBrains
+.idea/
+*.sln.iml
+.idea_modules/
+
+# Visual Studio Code
+.vscode/
+
+# Visual Studio
+.vs/
+*.opendb
+*.VC.db
+
+# OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+$RECYCLE.BIN/
+
+# Secrets / local config
+*.pfx
+*.key
+appsettings.*.local.json
+secrets.json
+
+# Docker
+**/docker-compose.override.yml
+
+# Test results
+[Tt]est[Rr]esult*/
+coverage/
+*.coverage
+*.coveragexml
+
+# ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# Tools / temp
+*.tmp
+*.temp
+*.swp
