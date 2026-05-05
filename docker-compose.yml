@@ -1,5 +1,5 @@
 services:
-  LyraBit-db:
+  lyrabit-db:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: LyraBit-db
     restart: unless-stopped
@@ -10,7 +10,7 @@ services:
     ports:
       - "1433:1433"
     volumes:
-      - LyraBit-db-data:/var/opt/mssql
+      - lyrabit-db-data:/var/opt/mssql
     healthcheck:
       test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "LyraBitDev_2024!" -C -Q "SELECT 1" || exit 1
       interval: 10s
@@ -20,26 +20,27 @@ services:
     networks:
       - lyrabit-net
 
-  LyraBit-api:
+  lyrabit-api:
     build:
       context: .
       dockerfile: Dockerfile
+    image: lyrabit-api:dev
     container_name: LyraBit-api
     restart: unless-stopped
     depends_on:
-      LyraBit-db:
+      lyrabit-db:
         condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
       ASPNETCORE_URLS: "http://+:8080"
-      ConnectionStrings__DefaultConnection: "Server=LyraBit-db,1433;Database=LyraBitDb;User Id=sa;Password=LyraBitDev_2024!;TrustServerCertificate=True;"
+      ConnectionStrings__DefaultConnection: "Server=lyrabit-db,1433;Database=LyraBitDb;User Id=sa;Password=LyraBitDev_2024!;TrustServerCertificate=True;"
     ports:
       - "5000:8080"
     networks:
       - lyrabit-net
 
 volumes:
-  LyraBit-db-data:
+  lyrabit-db-data:
 
 networks:
   lyrabit-net:
