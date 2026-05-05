@@ -22,6 +22,12 @@ public class Transaction
 
     public string? Category { get; set; }
 
+    public string? IpAddress { get; set; }
+
+    public string? DeviceId { get; set; }
+
+    public string? Channel { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public User Sender { get; set; } = null!;

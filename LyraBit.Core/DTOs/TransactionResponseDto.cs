@@ -12,4 +12,8 @@ public sealed record TransactionResponseDto(
     TransactionStatus Status,
     int? RiskScore,
     string? Category,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    string? IpAddress,
+    string? DeviceId,
+    string? Channel,
+    int SenderAccountAgeDays);

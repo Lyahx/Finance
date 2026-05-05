@@ -12,6 +12,10 @@ namespace LyraBit.API.Controllers;
 [Authorize]
 public sealed class TransactionController : ControllerBase
 {
+    private const string DeviceIdHeader = "X-Device-Id";
+    private const string ChannelHeader = "X-Lyrabit-Channel";
+    private const string DefaultChannel = "Api";
+
     private readonly ITransactionService _transactions;
 
     public TransactionController(ITransactionService transactions)
@@ -29,7 +33,8 @@ public sealed class TransactionController : ControllerBase
         CancellationToken cancellationToken)
     {
         var senderId = User.GetUserId();
-        var transaction = await _transactions.TransferAsync(senderId, request, cancellationToken);
+        var transferContext = BuildTransferContext();
+        var transaction = await _transactions.TransferAsync(senderId, request, transferContext, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { id = transaction.Id }, transaction);
     }
 
@@ -54,5 +59,21 @@ public sealed class TransactionController : ControllerBase
         var userId = User.GetUserId();
         var transaction = await _transactions.GetTransactionByIdAsync(id, userId, cancellationToken);
         return Ok(transaction);
+    }
+
+    private TransferContext BuildTransferContext()
+    {
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var deviceId = Request.Headers.TryGetValue(DeviceIdHeader, out var deviceVal)
+            ? deviceVal.ToString()
+            : null;
+        var channel = Request.Headers.TryGetValue(ChannelHeader, out var channelVal)
+            ? channelVal.ToString()
+            : DefaultChannel;
+
+        return new TransferContext(
+            string.IsNullOrWhiteSpace(ip) ? null : ip,
+            string.IsNullOrWhiteSpace(deviceId) ? null : deviceId,
+            string.IsNullOrWhiteSpace(channel) ? null : channel);
     }
 }

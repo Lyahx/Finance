@@ -58,4 +58,15 @@ public sealed class TransactionRepository : ITransactionRepository
             .AnyAsync(
                 t => t.SenderId == senderId && t.ReceiverId == receiverId,
                 cancellationToken);
+
+    public async Task<decimal> GetAvgSpendingAsync(Guid userId, TimeSpan window, CancellationToken cancellationToken = default)
+    {
+        var cutoff = DateTime.UtcNow.Subtract(window);
+        var avg = await _db.Transactions
+            .AsNoTracking()
+            .Where(t => t.SenderId == userId && t.CreatedAt >= cutoff)
+            .Select(t => (decimal?)t.Amount)
+            .AverageAsync(cancellationToken);
+        return avg ?? 0m;
+    }
 }

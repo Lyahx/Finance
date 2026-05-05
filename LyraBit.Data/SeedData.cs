@@ -8,6 +8,24 @@ public static class SeedData
 {
     private const string DemoPassword = "Password123!";
 
+    private static readonly string[] DemoIps =
+    {
+        "85.34.74.122", "92.45.108.7", "78.135.220.10",
+        "176.55.142.91", "212.175.32.45", "95.10.88.211",
+        "194.27.110.5", "31.140.67.220"
+    };
+
+    private static readonly string[] DemoDevices =
+    {
+        "ios-7f3a91b2c4d8", "android-5e2c8a91d3f7", "web-fp-aabbccdd11",
+        "web-fp-99887766ee", "ios-a1b2c3d4e5f6", "android-deadbeef01"
+    };
+
+    private static readonly string[] DemoChannels =
+    {
+        "MobileApp", "Web", "MobileApp", "Web", "QR", "Api"
+    };
+
     public static async Task SeedAsync(LyraBitDbContext db, CancellationToken cancellationToken = default)
     {
         if (await db.Users.AnyAsync(cancellationToken))
@@ -68,7 +86,10 @@ public static class SeedData
             when: nightUtc,
             status: TransactionStatus.FlaggedForReview,
             riskScore: 70,
-            category: null);
+            category: null,
+            ipAddress: "203.0.113.42",
+            deviceId: "unknown-device-x9",
+            channel: "Web");
 
         AddTransfer(transactions, wallets,
             senderIdx: 2, receiverIdx: 0,
@@ -77,7 +98,10 @@ public static class SeedData
             when: now.AddDays(-7),
             status: TransactionStatus.Completed,
             riskScore: 5,
-            category: "Subscriptions");
+            category: "Subscriptions",
+            ipAddress: "85.34.74.122",
+            deviceId: "ios-7f3a91b2c4d8",
+            channel: "MobileApp");
 
         AddTransfer(transactions, wallets,
             senderIdx: 1, receiverIdx: 3,
@@ -86,7 +110,10 @@ public static class SeedData
             when: now.AddDays(-5),
             status: TransactionStatus.Completed,
             riskScore: 10,
-            category: "Subscriptions");
+            category: "Subscriptions",
+            ipAddress: "92.45.108.7",
+            deviceId: "android-5e2c8a91d3f7",
+            channel: "MobileApp");
 
         AddTransfer(transactions, wallets,
             senderIdx: 0, receiverIdx: 2,
@@ -95,9 +122,12 @@ public static class SeedData
             when: now.AddDays(-3),
             status: TransactionStatus.Completed,
             riskScore: 5,
-            category: "Food");
+            category: "Food",
+            ipAddress: "78.135.220.10",
+            deviceId: "web-fp-aabbccdd11",
+            channel: "Web");
 
-        var randomDescriptions = new (string Description, string Category)[]
+        var randomDescriptions = new (string Description, string? Category)[]
         {
             ("Akşam yemeği",          "Food"),
             ("Kira payı",             "Rent"),
@@ -107,7 +137,7 @@ public static class SeedData
             ("Kafede ödeme",          "Food"),
             ("Sinema bileti",         "Entertainment"),
             ("Konser bileti",         "Entertainment"),
-            ("Borç ödemesi",          null!),
+            ("Borç ödemesi",          null),
             ("Spor salonu üyeliği",   "Health"),
             ("Kitap",                 "Education")
         };
@@ -135,7 +165,10 @@ public static class SeedData
                 amount, desc, when,
                 TransactionStatus.Completed,
                 risk,
-                cat);
+                cat,
+                ipAddress: DemoIps[random.Next(DemoIps.Length)],
+                deviceId: DemoDevices[random.Next(DemoDevices.Length)],
+                channel: DemoChannels[random.Next(DemoChannels.Length)]);
         }
 
         await db.Categories.AddRangeAsync(categories, cancellationToken);
@@ -155,7 +188,10 @@ public static class SeedData
         DateTime when,
         TransactionStatus status,
         int riskScore,
-        string? category)
+        string? category,
+        string? ipAddress,
+        string? deviceId,
+        string? channel)
     {
         transactions.Add(new Transaction
         {
@@ -168,6 +204,9 @@ public static class SeedData
             Status = status,
             RiskScore = riskScore,
             Category = category,
+            IpAddress = ipAddress,
+            DeviceId = deviceId,
+            Channel = channel,
             CreatedAt = when
         });
 

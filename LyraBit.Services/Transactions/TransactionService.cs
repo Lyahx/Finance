@@ -42,6 +42,7 @@ public sealed class TransactionService : ITransactionService
     public async Task<TransactionResponseDto> TransferAsync(
         Guid senderId,
         TransferRequestDto request,
+        TransferContext context,
         CancellationToken cancellationToken = default)
     {
         if (request.Amount <= 0)
@@ -60,7 +61,15 @@ public sealed class TransactionService : ITransactionService
             throw new BadRequestException("Cannot transfer to yourself.");
         }
 
-        var riskScore = await _fraud.CalculateRiskScoreAsync(senderId, receiver.Id, request.Amount, cancellationToken);
+        var senderAccountAgeDays = (int)(DateTime.UtcNow - sender.CreatedAt).TotalDays;
+
+        var riskScore = await _fraud.CalculateRiskScoreAsync(
+            senderId,
+            receiver.Id,
+            request.Amount,
+            senderAccountAgeDays,
+            cancellationToken);
+
         var status = riskScore >= _fraudSettings.FlaggedThreshold
             ? TransactionStatus.FlaggedForReview
             : TransactionStatus.Completed;
@@ -75,6 +84,9 @@ public sealed class TransactionService : ITransactionService
             Description = request.Description,
             Status = status,
             RiskScore = riskScore,
+            IpAddress = context.IpAddress,
+            DeviceId = context.DeviceId,
+            Channel = context.Channel,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -104,8 +116,8 @@ public sealed class TransactionService : ITransactionService
         }
 
         _logger.LogInformation(
-            "Transfer completed: {Amount} TRY from {SenderId} to {ReceiverId}, status={Status}, risk={Risk}",
-            request.Amount, senderId, receiver.Id, status, riskScore);
+            "Transfer completed: {Amount} TRY from {SenderId} to {ReceiverId}, status={Status}, risk={Risk}, channel={Channel}",
+            request.Amount, senderId, receiver.Id, status, riskScore, context.Channel);
 
         return new TransactionResponseDto(
             transaction.Id,
@@ -117,7 +129,11 @@ public sealed class TransactionService : ITransactionService
             transaction.Status,
             transaction.RiskScore,
             transaction.Category,
-            transaction.CreatedAt);
+            transaction.CreatedAt,
+            transaction.IpAddress,
+            transaction.DeviceId,
+            transaction.Channel,
+            senderAccountAgeDays);
     }
 
     public async Task<List<TransactionResponseDto>> GetUserTransactionsAsync(
@@ -145,7 +161,9 @@ public sealed class TransactionService : ITransactionService
     }
 
     private static TransactionResponseDto MapToDto(Transaction t)
-        => new(
+    {
+        var ageDays = (int)(DateTime.UtcNow - t.Sender.CreatedAt).TotalDays;
+        return new TransactionResponseDto(
             t.Id,
             t.Sender.Username,
             t.Receiver.Username,
@@ -155,5 +173,10 @@ public sealed class TransactionService : ITransactionService
             t.Status,
             t.RiskScore,
             t.Category,
-            t.CreatedAt);
+            t.CreatedAt,
+            t.IpAddress,
+            t.DeviceId,
+            t.Channel,
+            ageDays);
+    }
 }

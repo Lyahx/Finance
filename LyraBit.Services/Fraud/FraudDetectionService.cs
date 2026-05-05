@@ -25,6 +25,7 @@ public sealed class FraudDetectionService : IFraudDetectionService
         Guid senderId,
         Guid receiverId,
         decimal amount,
+        int senderAccountAgeDays,
         CancellationToken cancellationToken = default)
     {
         if (_settings.IsExternalServiceEnabled)
@@ -62,11 +63,22 @@ public sealed class FraudDetectionService : IFraudDetectionService
             score += 10;
         }
 
+        if (senderAccountAgeDays < 30 && amount >= 5_000m)
+        {
+            score += 20;
+        }
+
+        var avgSpending = await _txRepo.GetAvgSpendingAsync(senderId, TimeSpan.FromDays(180), cancellationToken);
+        if (avgSpending > 0m && amount > avgSpending * 10m)
+        {
+            score += 25;
+        }
+
         var finalScore = Math.Min(score, 100);
 
         _logger.LogInformation(
-            "Risk score for transfer {SenderId} -> {ReceiverId} amount {Amount}: {Score}",
-            senderId, receiverId, amount, finalScore);
+            "Risk score for transfer {SenderId} -> {ReceiverId} amount {Amount} (age {AgeDays}d, avg6m {Avg}): {Score}",
+            senderId, receiverId, amount, senderAccountAgeDays, avgSpending, finalScore);
 
         return finalScore;
     }

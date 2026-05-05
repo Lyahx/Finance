@@ -16,4 +16,6 @@ public interface ITransactionRepository
     Task<int> CountRecentByUserAsync(Guid userId, TimeSpan window, CancellationToken cancellationToken = default);
 
     Task<bool> HasUserSentToReceiverAsync(Guid senderId, Guid receiverId, CancellationToken cancellationToken = default);
+
+    Task<decimal> GetAvgSpendingAsync(Guid userId, TimeSpan window, CancellationToken cancellationToken = default);
 }

@@ -34,6 +34,15 @@ public sealed class TransactionConfiguration : IEntityTypeConfiguration<Transact
         builder.Property(t => t.Category)
             .HasMaxLength(100);
 
+        builder.Property(t => t.IpAddress)
+            .HasMaxLength(45);
+
+        builder.Property(t => t.DeviceId)
+            .HasMaxLength(100);
+
+        builder.Property(t => t.Channel)
+            .HasMaxLength(30);
+
         builder.Property(t => t.CreatedAt)
             .HasDefaultValueSql("GETUTCDATE()");
 
