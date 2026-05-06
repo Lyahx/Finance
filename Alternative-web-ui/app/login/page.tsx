@@ -58,9 +58,11 @@ export default function LoginPage() {
       {/* Top bar */}
       <header className="px-6 lg:px-12 py-6 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 text-black">
-          <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white font-black text-lg">
-            L
-          </div>
+          <img
+            src="/lyrabit-logo.png"
+            alt="LyraBit"
+            className="w-9 h-9 rounded-lg object-cover"
+          />
           <span className="font-black text-xl tracking-tight">LyraBit</span>
         </Link>
         <Link

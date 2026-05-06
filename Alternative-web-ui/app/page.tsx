@@ -16,6 +16,8 @@ import {
   CheckCircle2,
   Plus,
 } from 'lucide-react';
+import PublicNav from '@/components/marketing/PublicNav';
+import SiteFooter from '@/components/marketing/SiteFooter';
 
 export default function LandingPage() {
   return (
@@ -30,46 +32,6 @@ export default function LandingPage() {
       <Download />
       <SiteFooter />
     </div>
-  );
-}
-
-/* ----------------------------- Nav ----------------------------- */
-
-function PublicNav() {
-  return (
-    <header className="absolute top-0 left-0 right-0 z-50 px-6 lg:px-12 py-6 flex items-center justify-between">
-      <Link href="/" className="flex items-center gap-2.5 text-white">
-        <div className="w-9 h-9 bg-white text-[#00B4FF] rounded-lg flex items-center justify-center font-black text-xl">
-          L
-        </div>
-        <span className="font-black text-xl tracking-tight">LyraBit</span>
-      </Link>
-      <nav className="hidden md:flex items-center gap-1">
-        {['Bireysel', 'Kurumsal', 'Geliştirici'].map((l) => (
-          <a
-            key={l}
-            href="#"
-            className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white transition-colors"
-          >
-            {l}
-          </a>
-        ))}
-      </nav>
-      <div className="flex items-center gap-2">
-        <Link
-          href="/login"
-          className="px-5 py-2.5 text-sm font-bold text-white hover:opacity-80 transition-opacity"
-        >
-          Giriş Yap
-        </Link>
-        <Link
-          href="/signup"
-          className="px-5 py-2.5 rounded-full bg-black text-white text-sm font-bold hover:opacity-90 transition-opacity"
-        >
-          Hesap Aç
-        </Link>
-      </div>
-    </header>
   );
 }
 
@@ -619,62 +581,3 @@ function QRCodePlaceholder() {
   );
 }
 
-/* -------------------------- 8. Footer -------------------------- */
-
-function SiteFooter() {
-  return (
-    <footer className="bg-black text-white py-16 md:py-24">
-      <div className="max-w-[1440px] mx-auto px-6 lg:px-12">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
-          <div className="md:col-span-5">
-            <div className="flex items-center gap-2.5 mb-6">
-              <div className="w-9 h-9 bg-white text-black rounded-lg flex items-center justify-center font-black text-xl">
-                L
-              </div>
-              <span className="font-black text-2xl">LyraBit</span>
-            </div>
-            <p className="text-white/60 max-w-sm leading-relaxed">
-              PayPal moves money, we manage it.<br />
-              Türkiye'nin akıllı finans asistanı.
-            </p>
-          </div>
-
-          <FooterCol
-            title="Ürün"
-            links={['Bireysel', 'Kurumsal', 'Geliştirici', 'Fiyatlandırma']}
-          />
-          <FooterCol
-            title="Şirket"
-            links={['Hakkımızda', 'Kariyer', 'Basın', 'İletişim']}
-          />
-          <FooterCol
-            title="Yasal"
-            links={['Gizlilik', 'Kullanım Koşulları', 'KVKK', 'Çerezler']}
-          />
-        </div>
-
-        <div className="mt-16 pt-8 border-t border-white/10 flex flex-wrap items-center justify-between gap-4 text-xs text-white/50">
-          <p>© 2026 LyraBit Finans Teknolojileri A.Ş.</p>
-          <p>Bu uygulama hackathon kapsamında demo amaçlıdır.</p>
-        </div>
-      </div>
-    </footer>
-  );
-}
-
-function FooterCol({ title, links }: { title: string; links: string[] }) {
-  return (
-    <div className="md:col-span-2">
-      <p className="text-xs font-black uppercase tracking-wider mb-4">{title}</p>
-      <ul className="space-y-2">
-        {links.map((l) => (
-          <li key={l}>
-            <a href="#" className="text-sm text-white/60 hover:text-white transition-colors">
-              {l}
-            </a>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
