@@ -12,7 +12,8 @@ import {
   Clock,
   CheckCircle2,
 } from 'lucide-react';
-import { MOCK_TRANSACTIONS, USER_DATA } from '@/constants/mockData';
+import { MOCK_TRANSACTIONS } from '@/constants/mockData';
+import { useCurrentUser } from '@/lib/auth-context';
 
 type Mode = 'send' | 'topup';
 
@@ -37,6 +38,8 @@ function TransfersInner() {
   const searchParams = useSearchParams();
   const initialMode: Mode = searchParams.get('action') === 'topup' ? 'topup' : 'send';
 
+  const { user } = useCurrentUser();
+  const balance = user?.balance ?? 0;
   const [mode, setMode] = useState<Mode>(initialMode);
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
@@ -56,7 +59,7 @@ function TransfersInner() {
     if (mode === 'send') {
       if (!recipient.trim()) return showToast('error', 'Alıcı zorunlu.');
       if (!(amt > 0)) return showToast('error', "Tutar 0'dan büyük olmalı.");
-      if (amt > USER_DATA.balance) return showToast('error', 'Yetersiz bakiye.');
+      if (amt > balance) return showToast('error', 'Yetersiz bakiye.');
       showToast(
         'success',
         `${amt.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL ${recipient}'e gönderildi.`,
@@ -279,7 +282,7 @@ function TransfersInner() {
               Mevcut Bakiye
             </p>
             <h2 className="text-4xl font-bold tracking-tight mt-2">
-              {USER_DATA.balance.toLocaleString('tr-TR', {
+              {balance.toLocaleString('tr-TR', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}

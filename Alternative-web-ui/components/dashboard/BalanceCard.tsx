@@ -3,10 +3,12 @@
 import React from 'react';
 import Link from 'next/link';
 import { Plus, Send, Wallet } from 'lucide-react';
-import { USER_DATA } from '@/constants/mockData';
+import { useCurrentUser } from '@/lib/auth-context';
 
 const BalanceCard = () => {
-  const formatted = USER_DATA.balance.toLocaleString('tr-TR', {
+  const { user } = useCurrentUser();
+  const balance = user?.balance ?? 0;
+  const formatted = balance.toLocaleString('tr-TR', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });

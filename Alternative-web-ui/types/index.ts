@@ -18,8 +18,12 @@ export interface Transaction {
 }
 
 export interface UserProfile {
-  userId: string;
-  name: string;
+  id: string;
+  email: string;
+  username: string;
+  fullName: string;
+  createdAt: string;
+  accountAgeDays: number;
   balance: number;
   currency: string;
 }

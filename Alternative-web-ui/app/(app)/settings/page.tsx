@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
 import {
   User,
@@ -27,7 +27,7 @@ import {
   AlertTriangle,
   LogOut,
 } from 'lucide-react';
-import { USER_DATA } from '@/constants/mockData';
+import { useCurrentUser } from '@/lib/auth-context';
 
 type Section = 'profile' | 'security' | 'notifications' | 'preferences' | 'data';
 
@@ -113,22 +113,33 @@ export default function SettingsPage() {
 /* ---------- Profile ---------- */
 
 function ProfileSection({ onSaved }: { onSaved: (m: string) => void }) {
-  const [fullName, setFullName] = useState('Furkan Bağdemir');
-  const [email, setEmail] = useState('furkan@hpay.com.tr');
+  const { user } = useCurrentUser();
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('+90 532 123 45 67');
   const [iban, setIban] = useState('TR58 0006 1005 1978 6457 8413 22');
+
+  useEffect(() => {
+    if (user) {
+      setFullName(user.fullName);
+      setEmail(user.email);
+    }
+  }, [user]);
+
+  const username = user?.username ?? '';
+  const avatarSeed = username || user?.fullName || 'lyrabit';
 
   return (
     <Panel title="Profil Bilgileri" sub="Hesabınla ilişkilendirilen kişisel bilgiler.">
       <div className="flex items-center gap-4 pb-5 border-b border-gray-100 dark:border-slate-800">
         <img
-          src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${USER_DATA.name}`}
+          src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(avatarSeed)}`}
           alt="Profil"
           className="w-20 h-20 rounded-full bg-blue-100 ring-4 ring-blue-50 dark:ring-blue-950/30"
         />
         <div className="flex-1">
-          <p className="font-bold text-lg">{fullName}</p>
-          <p className="text-sm text-gray-500">@{USER_DATA.name.toLowerCase()}</p>
+          <p className="font-bold text-lg">{fullName || '...'}</p>
+          <p className="text-sm text-gray-500">{username ? `@${username}` : ''}</p>
           <button
             onClick={() => onSaved('Avatar değiştirme yakında.')}
             className="text-xs font-semibold text-lyraBlue mt-1 hover:underline"
@@ -148,7 +159,7 @@ function ProfileSection({ onSaved }: { onSaved: (m: string) => void }) {
         <Field
           label="Kullanıcı Adı"
           icon={<User size={14} />}
-          value={USER_DATA.name.toLowerCase()}
+          value={username}
           readOnly
           hint="Değiştirilemez"
         />
@@ -482,7 +493,9 @@ function PreferencesSection({ onSaved }: { onSaved: (m: string) => void }) {
 /* ---------- Data & Account ---------- */
 
 function DataSection({ onSaved }: { onSaved: (m: string) => void }) {
+  const { user } = useCurrentUser();
   const [confirmText, setConfirmText] = useState('');
+  const usernameLower = user?.username?.toLowerCase() ?? '';
 
   return (
     <>
@@ -533,11 +546,11 @@ function DataSection({ onSaved }: { onSaved: (m: string) => void }) {
           label="Onay için kullanıcı adını yaz"
           value={confirmText}
           onChange={setConfirmText}
-          placeholder={USER_DATA.name.toLowerCase()}
+          placeholder={usernameLower}
         />
         <div className="flex justify-end mt-4">
           <button
-            disabled={confirmText !== USER_DATA.name.toLowerCase()}
+            disabled={!usernameLower || confirmText !== usernameLower}
             onClick={() => onSaved('Hesap silme demo modunda devre dışı.')}
             className="px-5 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
           >

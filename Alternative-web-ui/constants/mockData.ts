@@ -1,12 +1,5 @@
 ﻿import { Transaction } from "@/types";
 
-export const USER_DATA = {
-  userId: "1",
-  name: "Furkan",
-  balance: 84250.50,
-  currency: "TRY",
-};
-
 // Yeni gruplu yapı — Sidebar bunu kullanır.
 export type NavItemDef = { id: string; label: string; path: string };
 export type NavGroupDef = { id: string; label: string; items: NavItemDef[] };

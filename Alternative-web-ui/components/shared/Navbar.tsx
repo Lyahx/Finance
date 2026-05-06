@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { TokenStorage } from '@/services/api';
+import { useCurrentUser } from '@/lib/auth-context';
 import {
   Bell,
   Search,
@@ -72,12 +73,16 @@ const INITIAL_NOTIFS: Notification[] = [
 
 const Navbar = () => {
   const router = useRouter();
+  const { user } = useCurrentUser();
   const [openMenu, setOpenMenu] = useState<'notifs' | 'profile' | null>(null);
   const [notifs, setNotifs] = useState<Notification[]>(INITIAL_NOTIFS);
   const containerRef = useRef<HTMLDivElement>(null);
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  const displayFirstName = user?.fullName?.split(' ')[0] ?? user?.username ?? '';
+  const avatarSeed = user?.username || user?.fullName || 'lyrabit';
 
   const unreadCount = notifs.filter((n) => n.unread).length;
   const isDark = mounted && resolvedTheme === 'dark';
@@ -222,10 +227,12 @@ const Navbar = () => {
           >
             <div className="text-right hidden sm:block">
               <p className="text-xs text-gray-500 font-medium leading-tight">Merhaba,</p>
-              <p className="text-sm font-bold leading-tight">Furkan 👋</p>
+              <p className="text-sm font-bold leading-tight">
+                {displayFirstName ? `${displayFirstName} 👋` : '...'}
+              </p>
             </div>
             <img
-              src="https://api.dicebear.com/7.x/avataaars/svg?seed=Furkan"
+              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(avatarSeed)}`}
               alt="Profil"
               className="w-10 h-10 rounded-full border-2 border-white dark:border-slate-800 bg-blue-100 shadow-sm"
             />
@@ -235,13 +242,13 @@ const Navbar = () => {
             <div className="absolute right-0 top-full mt-2 w-[280px] bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-2xl shadow-black/10 overflow-hidden">
               <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 dark:border-slate-800">
                 <img
-                  src="https://api.dicebear.com/7.x/avataaars/svg?seed=Furkan"
+                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(avatarSeed)}`}
                   alt="Profil"
                   className="w-12 h-12 rounded-full bg-blue-100"
                 />
                 <div className="min-w-0">
-                  <p className="font-bold truncate">Furkan Bağdemir</p>
-                  <p className="text-xs text-gray-500 truncate">furkan@hpay.com.tr</p>
+                  <p className="font-bold truncate">{user?.fullName ?? '—'}</p>
+                  <p className="text-xs text-gray-500 truncate">{user?.email ?? ''}</p>
                 </div>
               </div>
 
