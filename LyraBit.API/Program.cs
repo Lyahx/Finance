@@ -86,11 +86,12 @@ app.UseCors(CorsPolicy);
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-    app.MapScalarApiReference();
-}
+// Scalar / OpenAPI hem dev hem production'da açık (demo amaçlı; istenirse Development'a kısıtla)
+app.MapOpenApi();
+app.MapScalarApiReference();
+
+// Lightweight health probe — Railway healthcheck için. DB'ye bakmaz, sadece process canlı mı.
+app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "lyrabit-api" }));
 
 app.UseAuthentication();
 app.UseAuthorization();
