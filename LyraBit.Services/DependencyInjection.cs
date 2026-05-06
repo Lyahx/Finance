@@ -1,7 +1,10 @@
 using LyraBit.Services.Auth;
+using LyraBit.Services.Categories;
 using LyraBit.Services.Fraud;
+using LyraBit.Services.Notifications;
 using LyraBit.Services.Settings;
 using LyraBit.Services.Transactions;
+using LyraBit.Services.Users;
 using LyraBit.Services.Wallets;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,6 +23,9 @@ public static class DependencyInjection
         services.AddScoped<IWalletService, WalletService>();
         services.AddScoped<IFraudDetectionService, FraudDetectionService>();
         services.AddScoped<ITransactionService, TransactionService>();
+        services.AddScoped<IUserService, UserService>();
+        services.AddScoped<ICategoryService, CategoryService>();
+        services.AddScoped<INotificationService, NotificationService>();
 
         return services;
     }

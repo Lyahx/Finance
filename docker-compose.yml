@@ -32,10 +32,30 @@ services:
         condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-      ASPNETCORE_URLS: "http://+:8080"
+      PORT: "8080"
       ConnectionStrings__DefaultConnection: "Server=lyrabit-db,1433;Database=LyraBitDb;User Id=sa;Password=LyraBitDev_2024!;TrustServerCertificate=True;"
+      Jwt__Key: "dev-only-change-me-in-production-min-32-chars-long"
+      Jwt__Issuer: "LyraBit"
+      Jwt__Audience: "LyraBit.Clients"
+      Jwt__ExpiryMinutes: "60"
     ports:
       - "5000:8080"
+    networks:
+      - lyrabit-net
+
+  lyrabit-web:
+    build:
+      context: ./Alternative-web-ui
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: "http://localhost:5000"
+    image: lyrabit-web:dev
+    container_name: LyraBit-web
+    restart: unless-stopped
+    depends_on:
+      - lyrabit-api
+    ports:
+      - "3000:3000"
     networks:
       - lyrabit-net
 

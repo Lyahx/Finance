@@ -61,6 +61,30 @@ public sealed class TransactionController : ControllerBase
         return Ok(transaction);
     }
 
+    [HttpGet(ApiRoutes.Transactions.AnalyticsSummary)]
+    [ProducesResponseType(typeof(AnalyticsSummaryDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<AnalyticsSummaryDto>> GetAnalyticsSummary(CancellationToken cancellationToken)
+    {
+        var userId = User.GetUserId();
+        var summary = await _transactions.GetAnalyticsSummaryAsync(userId, cancellationToken);
+        return Ok(summary);
+    }
+
+    [HttpPost(ApiRoutes.Transactions.Confirm)]
+    [ProducesResponseType(typeof(TransactionResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<TransactionResponseDto>> ConfirmFlagged(
+        [FromRoute] Guid id,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.GetUserId();
+        var tx = await _transactions.ConfirmFlaggedAsync(id, userId, cancellationToken);
+        return Ok(tx);
+    }
+
     private TransferContext BuildTransferContext()
     {
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString();

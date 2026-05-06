@@ -1,0 +1,13 @@
+# Railway config — Backend service (LyraBit.API)
+# Bu dosya proje kökünden deploy edilirken kullanılır.
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "sh -c 'ASPNETCORE_HTTP_PORTS=${PORT:-8080} dotnet LyraBit.API.dll'"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5
+healthcheckPath = "/scalar/v1"
+healthcheckTimeout = 30

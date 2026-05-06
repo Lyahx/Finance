@@ -1,0 +1,64 @@
+/* stylelint-disable at-rule-no-unknown */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* stylelint-enable at-rule-no-unknown */
+
+/* Display font for editorial headlines — Geist preferred, falls back to Inter heavy */
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap");
+
+:root {
+  --foreground-rgb: 30, 41, 59;
+  --background-rgb: 248, 250, 252;
+  --font-display: "Geist", "Inter", system-ui, sans-serif;
+}
+
+[class~="dark"] {
+  --foreground-rgb: 255, 255, 255;
+  --background-rgb: 15, 23, 42;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Editorial display class */
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+/* Card hover */
+.card-hover {
+  @apply transition-all duration-300 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99];
+}
+
+/* Pill button utilities */
+.btn-pill-black {
+  @apply inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full bg-black text-white font-bold text-sm hover:opacity-90 transition-opacity;
+}
+.btn-pill-white {
+  @apply inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full bg-white text-black font-bold text-sm border-2 border-black hover:opacity-90 transition-opacity;
+}
+.btn-pill-outline-light {
+  @apply inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full border-2 border-white text-white font-bold text-sm hover:bg-white hover:text-black transition-colors;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 dark:bg-slate-700 rounded-full;
+}
+
+/* Marketing pages — opt out of layout dark mode tokens */
+.marketing-light body {
+  background: #ffffff;
+  color: #000000;
+}

@@ -39,4 +39,21 @@ public sealed class UserRepository : IUserRepository
 
     public Task<bool> ExistsByUsernameAsync(string username, CancellationToken cancellationToken = default)
         => _db.Users.AnyAsync(u => u.Username == username, cancellationToken);
+
+    public Task<List<User>> SearchAsync(string query, int limit, Guid? excludeUserId, CancellationToken cancellationToken = default)
+    {
+        var pattern = $"%{query}%";
+        var q = _db.Users.AsNoTracking()
+            .Where(u =>
+                EF.Functions.Like(u.Username, pattern) ||
+                EF.Functions.Like(u.Email, pattern) ||
+                EF.Functions.Like(u.FullName, pattern));
+
+        if (excludeUserId.HasValue)
+        {
+            q = q.Where(u => u.Id != excludeUserId.Value);
+        }
+
+        return q.OrderBy(u => u.Username).Take(limit).ToListAsync(cancellationToken);
+    }
 }

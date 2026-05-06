@@ -13,4 +13,8 @@ public interface ITransactionService
     Task<List<TransactionResponseDto>> GetUserTransactionsAsync(Guid userId, CancellationToken cancellationToken = default);
 
     Task<TransactionResponseDto> GetTransactionByIdAsync(Guid transactionId, Guid currentUserId, CancellationToken cancellationToken = default);
+
+    Task<AnalyticsSummaryDto> GetAnalyticsSummaryAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    Task<TransactionResponseDto> ConfirmFlaggedAsync(Guid transactionId, Guid currentUserId, CancellationToken cancellationToken = default);
 }
