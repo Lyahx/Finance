@@ -1,26 +1,29 @@
-# LyraBit — Deploy Rehberi
+# LyraBit — Deploy Rehberi (Railway)
 
-İki servisli mimari:
+İki servisli mimari, native PostgreSQL:
+
 - **Backend** (`LyraBit.API` · .NET 10 · root `Dockerfile`) — port 8080
-- **Frontend** (`Alternative-web-ui` · Next.js 14 · standalone) — port 3000
-- **Veritabanı** — SQL Server 2022 (lokal compose'da yerleşik; production'da external)
+- **Frontend** (`Alternative-web-ui` · Next.js 14 standalone) — port 3000
+- **Veritabanı** — PostgreSQL 16 (Railway built-in olarak verilir, lokal compose'ta yerleşik)
 
 ---
 
 ## 0. Lokal Test (Docker Compose)
 
-Compose dosyası 3 servisi birden ayağa kaldırır.
+3 servisi birden ayağa kaldırır.
 
 ```bash
 docker compose up -d --build
-docker compose logs -f lyrabit-api    # Database is ready. yazısını bekle
+docker compose logs -f lyrabit-api    # "Database is ready." mesajını bekle
 docker compose logs -f lyrabit-web    # next start, port 3000
 ```
 
 Erişim:
-- Backend API:  http://localhost:5000
+- Backend API: http://localhost:5000
 - Backend Docs: http://localhost:5000/scalar/v1
-- Frontend:     http://localhost:3000
+- Frontend: http://localhost:3000
+
+Demo kullanıcılar (şifre `Password123!`): `furkan`, `semra`, `ali_yilmaz`, `ayse`, `mehmet`.
 
 Temizleme:
 ```bash
@@ -29,108 +32,100 @@ docker compose down -v   # -v volume'leri de siler (DB sıfırlanır)
 
 ---
 
-## 1. ⚠️ Veritabanı: Önemli Not
+## 1. Backend → Railway
 
-Backend **SQL Server**'a göre yazılmış (`UseSqlServer`, EF migrations). Railway'in
-yerleşik veritabanları **PostgreSQL/MySQL/Mongo**; **SQL Server yok.**
+### 1.1 Servisi Oluştur
 
-**3 seçenek var:**
+Railway Dashboard → **+ New Project → Deploy from GitHub Repo** → repo seç, root dizin (Dockerfile burada).
 
-### A) Railway'de SQL Server (kendi container)
-Railway "Empty Service" → SQL Server image'ı çalıştır. **Volume + ücretli plan
-gerektirir** (~5 USD/ay başlangıç). Connection string:
-```
-Server=<railway-internal-host>,1433;Database=LyraBitDb;User Id=sa;Password=...;TrustServerCertificate=True;
-```
+### 1.2 PostgreSQL Ekle
 
-### B) External SQL Server (Azure free tier / Somee / vs.)
-- Azure SQL Database serverless (5GB free tier var)
-- Connection string Azure'dan al, Railway backend env'ine yaz.
+Aynı projeye **+ New → Database → Add PostgreSQL**.
 
-### C) PostgreSQL'e port et (en sürdürülebilir)
-1. `LyraBit.Data` projesinde `Microsoft.EntityFrameworkCore.SqlServer` →
-   `Npgsql.EntityFrameworkCore.PostgreSQL`
-2. `DependencyInjection.cs` içinde `UseSqlServer` → `UseNpgsql`
-3. Migration'ları yeniden oluştur:
-   ```bash
-   rm -rf LyraBit.Data/Migrations
-   dotnet ef migrations add InitialCreate -p LyraBit.Data -s LyraBit.API
-   ```
-4. Railway → **+ New → Database → Add PostgreSQL** → `DATABASE_URL` ortam
-   değişkeni gelir. Connection string'i Postgres formatına çevirip backend'e ver.
+Railway otomatik şu env'leri sağlar (Postgres servisi içinde):
+- `DATABASE_URL` (`postgresql://user:pass@host:port/dbname`)
+- `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`
 
-> Hackathon timeline'ında (A) ya da (B) hızlıdır; (C) doğru iştir.
+### 1.3 Backend Servisi Variables
 
----
-
-## 2. Backend → Railway
-
-```bash
-# Railway CLI kuruluysa
-railway login
-railway init        # mevcut proje yoksa
-railway up
-```
-
-Veya UI üzerinden: **New Project → Deploy from GitHub Repo →** root dizini seç.
-
-### Required Environment Variables (Railway → Variables)
+Backend servisinin **Variables** sekmesinde ekle:
 
 ```
 ASPNETCORE_ENVIRONMENT=Production
-ConnectionStrings__DefaultConnection=<yukarıdaki seçeneklerden biri>
-Jwt__Key=<en az 32 karakter rastgele string — örn: openssl rand -base64 48>
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+Jwt__Key=<32+ karakter rastgele string>
 Jwt__Issuer=LyraBit
 Jwt__Audience=LyraBit.Clients
 Jwt__ExpiryMinutes=60
 ```
 
-> `PORT` Railway tarafından otomatik atanır, Dockerfile entrypoint bunu okur.
+> `${{Postgres.DATABASE_URL}}` Railway'in **service reference** sözdizimi —
+> Postgres servisinin URL'ini otomatik backend env'ine geçer.
 
-### Build & Run
+> `PORT` Railway tarafından otomatik atanır, Dockerfile entrypoint okur.
+
+> `Jwt__Key` üretmek için: `openssl rand -base64 48` veya
+> `node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"`.
+
+### 1.4 Build & Run
+
 - Builder: **Dockerfile** (`railway.toml` içinde tanımlı)
-- Start Command: `sh -c 'ASPNETCORE_HTTP_PORTS=${PORT:-8080} dotnet LyraBit.API.dll'`
-- Healthcheck: `/scalar/v1`
+- Start command: `sh -c 'ASPNETCORE_HTTP_PORTS=${PORT:-8080} dotnet LyraBit.API.dll'`
+- Healthcheck path: `/scalar/v1`
 
-### Doğrulama
+`Program.cs` startup'ta:
+1. `DATABASE_URL`'i Npgsql formatına çevirir (postgres URI → key=value)
+2. Migration'ı uygular (`db.Database.MigrateAsync`)
+3. Seed data ekler (`SeedData.SeedAsync` — boş DB'de demo kullanıcılar/işlemler)
+4. JWT auth + CORS açık + scalar docs (production'da kapalı)
+
+### 1.5 Doğrulama
+
 ```bash
 curl https://<your-backend>.up.railway.app/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"emailOrUsername":"furkan","password":"Password123!"}'
 ```
 
+`200 OK + { token, userId, ... }` döndüyse backend ↔ DB sağlam.
+
 ---
 
-## 3. Frontend → Railway
+## 2. Frontend → Railway
 
-UI üzerinden: **+ New Service → GitHub Repo →** root dizin: `Alternative-web-ui`.
+### 2.1 Servisi Oluştur
 
-### Required Environment Variables
+**+ New Service → GitHub Repo →** root dizin: `Alternative-web-ui`.
 
-**Build args (önemli — public env'ler build-time'da bake olur):**
+### 2.2 Variables
+
+`NEXT_PUBLIC_API_URL` build-time'da bake olur — hem **Build Variables** hem
+**Service Variables**'a ekle (Railway Dockerfile builder her ikisinde de okur):
+
 ```
 NEXT_PUBLIC_API_URL=https://<your-backend>.up.railway.app
 ```
 
-Railway'de **Settings → Variables** altında set et, hem **Build Variables** hem
-**Runtime Variables** olarak işaretle (bazı dağıtımlarda runtime'a iletmez).
+> Bu değer `/api/v1` içermez — `services/api.ts` ekliyor.
 
-### Build & Run
+### 2.3 Build & Run
+
 - Builder: **Dockerfile** (multi-stage Next.js standalone)
-- Start Command: `node server.js`
-- Healthcheck: `/`
+- Start command: `node server.js`
+- Healthcheck path: `/`
 
-### Doğrulama
-- `https://<your-frontend>.up.railway.app/` — landing
-- `/login` → demo kullanıcılar `furkan / Password123!`
+### 2.4 Doğrulama
+
+- `https://<your-frontend>.up.railway.app/` → editorial landing
+- `/login` → `furkan / Password123!`
 - Login sonrası dashboard cüzdan bakiyesi geliyorsa frontend ↔ backend bağlantısı OK.
 
 ---
 
-## 4. CORS
+## 3. CORS
 
 Backend `Program.cs` şu an `AllowAnyOrigin/Method/Header` (hackathon kolaylığı).
-Production'da daraltmak istersen:
+Production'da daraltmak için:
 
 ```csharp
 builder.Services.AddCors(opt => opt.AddPolicy(CorsPolicy, policy => policy
@@ -141,16 +136,38 @@ builder.Services.AddCors(opt => opt.AddPolicy(CorsPolicy, policy => policy
 
 ---
 
+## 4. Connection String Formatları (Referans)
+
+Backend `DATABASE_URL` veya `ConnectionStrings__DefaultConnection`'dan birini okur.
+URI formatı varsa otomatik Npgsql'e çevirir.
+
+**Postgres URI (Railway default):**
+```
+postgresql://user:pass@host:5432/dbname
+```
+
+**Npgsql key=value (lokal compose veya manuel):**
+```
+Host=lyrabit-db;Port=5432;Database=lyrabit;Username=lyrabit;Password=...;SSL Mode=Require;Trust Server Certificate=true
+```
+
+URI verirsen `Program.cs`'teki `NormalizePostgresConnectionString` SSL Mode'u
+otomatik `Require` yapar — Railway Postgres bunu zorunlu kılar.
+
+---
+
 ## 5. Hızlı Sorun Giderme
 
 | Belirti | Sebep | Çözüm |
 |---|---|---|
-| Backend `Database initialization failed` | Connection string yanlış / DB erişilemiyor | Railway DB host/port doğru mu? `TrustServerCertificate=True` var mı? |
-| Backend `Jwt:Key must be at least 32 characters` | Env eksik | `Jwt__Key` set et (32+ char) |
-| Frontend "Failed to fetch" | CORS veya yanlış API URL | `NEXT_PUBLIC_API_URL` doğru mu? Build sonrası tekrar deploy gerekir |
-| Frontend bakiye 0 görünüyor | Token henüz yok / register-only akış | `/login`'den giriş yapıp dashboard'ı kontrol et |
-| Railway port hatası | Dockerfile $PORT'u okumadı | shell-form ENTRYPOINT (`sh -c '... ${PORT}'`) doğru mu? |
-| Next.js build "Module not found" | tsconfig path alias çözülemedi | `Dockerfile` builder stage `npm ci` ile dependencies geliyor mu kontrol et |
+| `Database initialization failed` | Connection string yanlış / DB erişilemiyor | Backend Variables'da `DATABASE_URL=${{Postgres.DATABASE_URL}}` referansı doğru mu? |
+| `Cannot write DateTime with Kind=Unspecified` | Kod `.Date` veya `new DateTime(...)` kullanıyor, Kind=Utc değil | `DateTime.SpecifyKind(x, DateTimeKind.Utc)` ekle (kod tarafında düzeltildi) |
+| `Jwt:Key must be at least 32 characters` | Env eksik | `Jwt__Key` set et (32+ char) |
+| Frontend "Failed to fetch" | CORS veya yanlış API URL | `NEXT_PUBLIC_API_URL` doğru mu? Build sonrası tekrar deploy gerekir (build-time bake) |
+| Frontend bakiye 0 görünüyor | Token henüz yok | `/login` üzerinden gir |
+| Railway port hatası | Dockerfile $PORT'u okumadı | Shell-form ENTRYPOINT (`sh -c '... ${PORT}'`) |
+| Migration çakışması | `dotnet ef migrations` daha önce SQL Server'a göre üretilmişti | `LyraBit.Data/Migrations/` boşaltıp yeniden `dotnet ef migrations add InitialCreate` |
+| `SSL connection error` | Railway Postgres SSL zorunlu | Connection string'de `SSL Mode=Require;Trust Server Certificate=true` (URI verilirse otomatik eklenir) |
 
 ---
 
@@ -161,7 +178,7 @@ istersen: **Settings → Networking → Custom Domain →** CNAME ekle. SSL otom
 
 ---
 
-## Demo Hesaplar (production seed)
+## 7. Test Hesapları (production seed)
 
 Şifre hepsinde: `Password123!`
 
@@ -173,4 +190,5 @@ istersen: **Settings → Networking → Custom Domain →** CNAME ekle. SSL otom
 | ayse | ayse@hpay.com.tr | 75.000 ₺ |
 | mehmet | mehmet@hpay.com.tr | 75.000 ₺ |
 
-DB seed `SeedData.SeedAsync` ile ilk migration'da otomatik düşer.
+Boş DB'ye ilk migration düştüğünde `SeedData.SeedAsync` otomatik çalışır.
+DB zaten doluysa skip eder (idempotent — `if (db.Users.AnyAsync()) return;`).

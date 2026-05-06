@@ -78,7 +78,7 @@ public static class SeedData
 
         var transactions = new List<Transaction>();
 
-        var nightUtc = DateTime.UtcNow.Date.AddDays(-1);
+        var nightUtc = DateTime.SpecifyKind(DateTime.UtcNow.Date.AddDays(-1), DateTimeKind.Utc);
         AddTransfer(transactions, wallets,
             senderIdx: 0, receiverIdx: 4,
             amount: 50_000m,

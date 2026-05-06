@@ -25,7 +25,7 @@ public sealed class WalletConfiguration : IEntityTypeConfiguration<Wallet>
             .HasDefaultValue("TRY");
 
         builder.Property(w => w.CreatedAt)
-            .HasDefaultValueSql("GETUTCDATE()");
+            .HasDefaultValueSql("now() at time zone 'utc'");
 
         builder.HasOne(w => w.User)
             .WithOne(u => u.Wallet)

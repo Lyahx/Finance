@@ -1,22 +1,22 @@
 services:
   lyrabit-db:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    image: postgres:16-alpine
     container_name: LyraBit-db
     restart: unless-stopped
     environment:
-      ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "LyraBitDev_2024!"
-      MSSQL_PID: "Developer"
+      POSTGRES_USER: lyrabit
+      POSTGRES_PASSWORD: LyraBitDev_2024!
+      POSTGRES_DB: lyrabit
     ports:
-      - "1433:1433"
+      - "5432:5432"
     volumes:
-      - lyrabit-db-data:/var/opt/mssql
+      - lyrabit-db-data:/var/lib/postgresql/data
     healthcheck:
-      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "LyraBitDev_2024!" -C -Q "SELECT 1" || exit 1
-      interval: 10s
-      timeout: 5s
+      test: ["CMD-SHELL", "pg_isready -U lyrabit -d lyrabit"]
+      interval: 5s
+      timeout: 3s
       retries: 10
-      start_period: 30s
+      start_period: 10s
     networks:
       - lyrabit-net
 
@@ -33,7 +33,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
       PORT: "8080"
-      ConnectionStrings__DefaultConnection: "Server=lyrabit-db,1433;Database=LyraBitDb;User Id=sa;Password=LyraBitDev_2024!;TrustServerCertificate=True;"
+      ConnectionStrings__DefaultConnection: "Host=lyrabit-db;Port=5432;Database=lyrabit;Username=lyrabit;Password=LyraBitDev_2024!"
       Jwt__Key: "dev-only-change-me-in-production-min-32-chars-long"
       Jwt__Issuer: "LyraBit"
       Jwt__Audience: "LyraBit.Clients"

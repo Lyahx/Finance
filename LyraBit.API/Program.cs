@@ -21,7 +21,9 @@ builder.Services
 builder.Services.AddOpenApi();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is missing.");
+    ?? Environment.GetEnvironmentVariable("DATABASE_URL")
+    ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection or DATABASE_URL is missing.");
+connectionString = NormalizePostgresConnectionString(connectionString);
 builder.Services.AddDataLayer(connectionString);
 builder.Services.AddServiceLayer(builder.Configuration);
 
@@ -95,3 +97,28 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Postgres URI formatını (Railway DATABASE_URL) Npgsql key=value formatına çevirir.
+// Standart key=value zaten verilmişse olduğu gibi döner.
+static string NormalizePostgresConnectionString(string raw)
+{
+    if (string.IsNullOrWhiteSpace(raw))
+    {
+        return raw;
+    }
+
+    if (!raw.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) &&
+        !raw.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
+    {
+        return raw;
+    }
+
+    var uri = new Uri(raw);
+    var userInfo = uri.UserInfo.Split(':', 2);
+    var user = Uri.UnescapeDataString(userInfo[0]);
+    var pass = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : string.Empty;
+    var db = uri.AbsolutePath.TrimStart('/');
+
+    return $"Host={uri.Host};Port={(uri.Port > 0 ? uri.Port : 5432)};Database={db};" +
+           $"Username={user};Password={pass};SSL Mode=Require;Trust Server Certificate=true";
+}

@@ -9,8 +9,8 @@ public static class DependencyInjection
     public static IServiceCollection AddDataLayer(this IServiceCollection services, string connectionString)
     {
         services.AddDbContext<LyraBitDbContext>(options =>
-            options.UseSqlServer(connectionString, sql =>
-                sql.MigrationsAssembly(typeof(LyraBitDbContext).Assembly.FullName)));
+            options.UseNpgsql(connectionString, npgsql =>
+                npgsql.MigrationsAssembly(typeof(LyraBitDbContext).Assembly.FullName)));
 
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IWalletRepository, WalletRepository>();

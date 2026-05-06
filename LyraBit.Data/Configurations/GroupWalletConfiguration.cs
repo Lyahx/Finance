@@ -24,7 +24,7 @@ public sealed class GroupWalletConfiguration : IEntityTypeConfiguration<GroupWal
             .HasDefaultValue(0m);
 
         builder.Property(g => g.CreatedAt)
-            .HasDefaultValueSql("GETUTCDATE()");
+            .HasDefaultValueSql("now() at time zone 'utc'");
 
         builder.HasMany(g => g.Members)
             .WithMany(u => u.GroupWallets)
