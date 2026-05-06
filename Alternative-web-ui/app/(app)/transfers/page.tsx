@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { MOCK_TRANSACTIONS } from '@/constants/mockData';
 import { useCurrentUser } from '@/lib/auth-context';
+import { ApiService } from '@/services/api';
 
 type Mode = 'send' | 'topup';
 
@@ -38,7 +39,7 @@ function TransfersInner() {
   const searchParams = useSearchParams();
   const initialMode: Mode = searchParams.get('action') === 'topup' ? 'topup' : 'send';
 
-  const { user } = useCurrentUser();
+  const { user, refresh } = useCurrentUser();
   const balance = user?.balance ?? 0;
   const [mode, setMode] = useState<Mode>(initialMode);
   const [recipient, setRecipient] = useState('');
@@ -47,33 +48,63 @@ function TransfersInner() {
   const [filter, setFilter] = useState<'all' | 'sent' | 'received' | 'flagged'>('all');
   const [search, setSearch] = useState('');
   const [toast, setToast] = useState<{ kind: 'success' | 'error'; msg: string } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const showToast = (kind: 'success' | 'error', msg: string) => {
     setToast({ kind, msg });
     setTimeout(() => setToast(null), 3500);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const errorMessage = (err: unknown, fallback: string): string => {
+    const e = err as { detail?: string; title?: string; errors?: Record<string, string[]> };
+    if (e?.errors) {
+      const first = Object.values(e.errors)[0]?.[0];
+      if (first) return first;
+    }
+    return e?.detail ?? e?.title ?? fallback;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
     const amt = parseFloat(amount.replace(',', '.'));
+
     if (mode === 'send') {
       if (!recipient.trim()) return showToast('error', 'Alıcı zorunlu.');
       if (!(amt > 0)) return showToast('error', "Tutar 0'dan büyük olmalı.");
       if (amt > balance) return showToast('error', 'Yetersiz bakiye.');
-      showToast(
-        'success',
-        `${amt.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL ${recipient}'e gönderildi.`,
-      );
     } else {
       if (!(amt > 0)) return showToast('error', "Tutar 0'dan büyük olmalı.");
-      showToast(
-        'success',
-        `${amt.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL cüzdana eklendi.`,
-      );
     }
-    setRecipient('');
-    setAmount('');
-    setDescription('');
+
+    setSubmitting(true);
+    try {
+      if (mode === 'send') {
+        await ApiService.transfer({
+          receiverEmailOrUsername: recipient.trim(),
+          amount: amt,
+          description: description.trim() || undefined,
+        });
+        showToast(
+          'success',
+          `${amt.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL ${recipient}'e gönderildi.`,
+        );
+      } else {
+        await ApiService.addFunds(amt);
+        showToast(
+          'success',
+          `${amt.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL cüzdana eklendi.`,
+        );
+      }
+      setRecipient('');
+      setAmount('');
+      setDescription('');
+      await refresh();
+    } catch (err: unknown) {
+      showToast('error', errorMessage(err, 'İşlem tamamlanamadı.'));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const filteredTxs = useMemo(() => {
@@ -261,9 +292,12 @@ function TransfersInner() {
 
             <button
               type="submit"
-              className="w-full bg-lyraBlue hover:bg-lyraBlue-dark text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30 transition-all"
+              disabled={submitting}
+              className="w-full bg-lyraBlue hover:bg-lyraBlue-dark disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30 transition-all"
             >
-              {mode === 'send' ? (
+              {submitting ? (
+                'İşleniyor…'
+              ) : mode === 'send' ? (
                 <>
                   <Send size={18} /> Gönderiyi Onayla
                 </>

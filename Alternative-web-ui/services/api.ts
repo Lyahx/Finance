@@ -63,6 +63,8 @@ export const ApiService = {
     lyraFetch("/auth/login", { method: "POST", body: JSON.stringify(data) }),
   getMe: () => lyraFetch("/users/me"),
   getWallet: () => lyraFetch("/wallet"),
+  addFunds: (amount: number) =>
+    lyraFetch("/wallet/add-funds", { method: "POST", body: JSON.stringify({ amount }) }),
   getTransactions: () => lyraFetch("/transactions"),
   getCategories: () => lyraFetch("/categories"),
   getNotifications: () => lyraFetch("/notifications"),
