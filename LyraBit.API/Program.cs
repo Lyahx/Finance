@@ -20,9 +20,16 @@ builder.Services
 
 builder.Services.AddOpenApi();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? Environment.GetEnvironmentVariable("DATABASE_URL")
-    ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection or DATABASE_URL is missing.");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    connectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
+}
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "Connection string is missing. Set ConnectionStrings__DefaultConnection or DATABASE_URL.");
+}
 connectionString = NormalizePostgresConnectionString(connectionString);
 builder.Services.AddDataLayer(connectionString);
 builder.Services.AddServiceLayer(builder.Configuration);
