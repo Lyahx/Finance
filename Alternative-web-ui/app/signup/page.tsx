@@ -4,8 +4,9 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, ArrowLeft, Check } from 'lucide-react';
+import { ApiService, TokenStorage } from '@/services/api';
 
-const STEPS = ['email', 'name', 'password'] as const;
+const STEPS = ['email', 'name', 'username', 'password'] as const;
 type Step = (typeof STEPS)[number];
 
 export default function SignupPage() {
@@ -13,13 +14,15 @@ export default function SignupPage() {
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const stepIndex = STEPS.indexOf(step);
   const progress = ((stepIndex + 1) / STEPS.length) * 100;
 
-  const next = (e: React.FormEvent) => {
+  const next = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     if (step === 'email') {
@@ -33,13 +36,34 @@ export default function SignupPage() {
         setError('Ad soyad en az 2 karakter olmalı.');
         return;
       }
+      setStep('username');
+    } else if (step === 'username') {
+      if (!/^[a-zA-Z0-9_]{3,50}$/.test(username.trim())) {
+        setError('Kullanıcı adı 3-50 karakter; sadece harf, rakam ve _ kullanılabilir.');
+        return;
+      }
       setStep('password');
     } else {
       if (password.length < 8) {
         setError('Şifre en az 8 karakter olmalı.');
         return;
       }
-      router.push('/dashboard');
+      setSubmitting(true);
+      try {
+        const res = await ApiService.register({
+          email: email.trim(),
+          username: username.trim(),
+          fullName: fullName.trim(),
+          password,
+        });
+        TokenStorage.set(res.token);
+        router.push('/dashboard');
+      } catch (err: unknown) {
+        const detail = (err as { detail?: string; title?: string })?.detail
+          ?? (err as { title?: string })?.title;
+        setError(detail || 'Kayıt başarısız. Lütfen tekrar dene.');
+        setSubmitting(false);
+      }
     }
   };
 
@@ -92,11 +116,13 @@ export default function SignupPage() {
           <h1 className="text-5xl md:text-6xl font-black tracking-tight leading-[0.95] mb-3 text-black">
             {step === 'email' && 'Hesabını oluştur.'}
             {step === 'name' && `Tanışalım${email ? '.' : ''}`}
+            {step === 'username' && 'Kullanıcı adı seç.'}
             {step === 'password' && 'Bir şifre belirle.'}
           </h1>
           <p className="text-base text-black/60 mb-10">
             {step === 'email' && 'E-postanla başlayalım. Komisyonsuz transfer dakikalar içinde.'}
             {step === 'name' && 'Bizim seni nasıl çağıracağımızı söyle.'}
+            {step === 'username' && 'Para gönderirken arkadaşların seni bununla bulacak.'}
             {step === 'password' && 'En az 8 karakter, hesabın senin elinde.'}
           </p>
 
@@ -133,6 +159,29 @@ export default function SignupPage() {
               </div>
             )}
 
+            {step === 'username' && (
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-black/60 mb-2 block">
+                  Kullanıcı adı
+                </label>
+                <div className="relative">
+                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-lg text-black/40 font-semibold">
+                    @
+                  </span>
+                  <input
+                    autoFocus
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value.replace(/\s/g, ''))}
+                    className="w-full pl-12 pr-5 py-4 text-lg border-2 border-black/10 rounded-2xl focus:border-black outline-none bg-white text-black transition-colors"
+                    placeholder="furkan_b"
+                    autoComplete="username"
+                  />
+                </div>
+                <p className="mt-2 text-xs text-black/40">3-50 karakter · harf, rakam ve _ kullanabilirsin</p>
+              </div>
+            )}
+
             {step === 'password' && (
               <div>
                 <label className="text-xs font-bold uppercase tracking-wider text-black/60 mb-2 block">
@@ -158,10 +207,17 @@ export default function SignupPage() {
 
             <button
               type="submit"
-              className="w-full px-6 py-4 rounded-full bg-black text-white font-bold text-base hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+              disabled={submitting}
+              className="w-full px-6 py-4 rounded-full bg-black text-white font-bold text-base hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity flex items-center justify-center gap-2"
             >
-              {step === 'password' ? 'Hesabı oluştur' : 'Devam et'}
-              <ArrowRight size={18} />
+              {submitting ? (
+                'Hesap oluşturuluyor…'
+              ) : (
+                <>
+                  {step === 'password' ? 'Hesabı oluştur' : 'Devam et'}
+                  <ArrowRight size={18} />
+                </>
+              )}
             </button>
           </form>
 

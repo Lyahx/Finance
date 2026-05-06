@@ -20,6 +20,7 @@ import {
   Target,
 } from 'lucide-react';
 import { NAV_GROUPS } from "@/constants/mockData";
+import { TokenStorage } from "@/services/api";
 
 const ICONS: Record<string, React.ReactNode> = {
   dashboard: <LayoutDashboard size={18} />,
@@ -79,7 +80,10 @@ const Sidebar = () => {
           active={pathname === '/settings'}
         />
         <button
-          onClick={() => router.push('/')}
+          onClick={() => {
+            TokenStorage.clear();
+            router.replace('/login');
+          }}
           className="flex items-center gap-3 px-3 py-2.5 w-full text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition-all"
         >
           <LogOut size={18} />

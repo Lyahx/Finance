@@ -3,8 +3,21 @@ import { Transaction, UserProfile } from "@/types";
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "http://localhost:5000";
 
+const TOKEN_KEY = "token";
+
+export const TokenStorage = {
+  get: (): string | null =>
+    typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null,
+  set: (token: string): void => {
+    if (typeof window !== "undefined") localStorage.setItem(TOKEN_KEY, token);
+  },
+  clear: (): void => {
+    if (typeof window !== "undefined") localStorage.removeItem(TOKEN_KEY);
+  },
+};
+
 const lyraFetch = async (endpoint: string, options: RequestInit = {}) => {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const token = TokenStorage.get();
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -24,7 +37,30 @@ const lyraFetch = async (endpoint: string, options: RequestInit = {}) => {
   return response.json();
 };
 
+export interface AuthResponse {
+  token: string;
+  userId: string;
+  username: string;
+  expiresAt: string;
+}
+
+export interface RegisterPayload {
+  email: string;
+  username: string;
+  password: string;
+  fullName: string;
+}
+
+export interface LoginPayload {
+  emailOrUsername: string;
+  password: string;
+}
+
 export const ApiService = {
+  register: (data: RegisterPayload): Promise<AuthResponse> =>
+    lyraFetch("/auth/register", { method: "POST", body: JSON.stringify(data) }),
+  login: (data: LoginPayload): Promise<AuthResponse> =>
+    lyraFetch("/auth/login", { method: "POST", body: JSON.stringify(data) }),
   getMe: () => lyraFetch("/users/me"),
   getWallet: () => lyraFetch("/wallet"),
   getTransactions: () => lyraFetch("/transactions"),

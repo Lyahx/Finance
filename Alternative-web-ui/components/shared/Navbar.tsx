@@ -2,7 +2,9 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
+import { TokenStorage } from '@/services/api';
 import {
   Bell,
   Search,
@@ -69,6 +71,7 @@ const INITIAL_NOTIFS: Notification[] = [
 ];
 
 const Navbar = () => {
+  const router = useRouter();
   const [openMenu, setOpenMenu] = useState<'notifs' | 'profile' | null>(null);
   const [notifs, setNotifs] = useState<Notification[]>(INITIAL_NOTIFS);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -283,7 +286,8 @@ const Navbar = () => {
                 <button
                   onClick={() => {
                     setOpenMenu(null);
-                    alert('Demo modu — çıkış yapılamaz.');
+                    TokenStorage.clear();
+                    router.replace('/login');
                   }}
                   className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition-all"
                 >

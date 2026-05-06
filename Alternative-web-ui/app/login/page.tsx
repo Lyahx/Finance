@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { ApiService, TokenStorage } from '@/services/api';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -12,6 +13,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPwd, setShowPwd] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const onEmail = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,14 +25,32 @@ export default function LoginPage() {
     setStep('password');
   };
 
-  const onPassword = (e: React.FormEvent) => {
+  const onPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!password) {
       setError('Şifre zorunlu.');
       return;
     }
     setError(null);
-    router.push('/dashboard');
+    setSubmitting(true);
+    try {
+      const res = await ApiService.login({
+        emailOrUsername: email.trim(),
+        password,
+      });
+      TokenStorage.set(res.token);
+      router.push('/dashboard');
+    } catch (err: unknown) {
+      const status = (err as { status?: number })?.status;
+      const detail = (err as { detail?: string; title?: string })?.detail
+        ?? (err as { title?: string })?.title;
+      if (status === 401) {
+        setError('E-posta/kullanıcı adı veya şifre hatalı. Hesabın yoksa önce kaydol.');
+      } else {
+        setError(detail || 'Giriş başarısız. Lütfen tekrar dene.');
+      }
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -154,9 +174,10 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                className="w-full px-6 py-4 rounded-full bg-black text-white font-bold text-base hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                disabled={submitting}
+                className="w-full px-6 py-4 rounded-full bg-black text-white font-bold text-base hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity flex items-center justify-center gap-2"
               >
-                Giriş yap <ArrowRight size={18} />
+                {submitting ? 'Giriş yapılıyor…' : <>Giriş yap <ArrowRight size={18} /></>}
               </button>
 
               <button
